@@ -12,7 +12,9 @@ class Network(object):
   def build_output_ops(self, input_layer, network_output_type, 
       value_hidden_sizes, advantage_hidden_sizes, output_size, 
       weights_initializer, biases_initializer, hidden_activation_fn, 
-      output_activation_fn, trainable):
+      output_activation_fn, trainable ,inputa = None,judgemente=None):
+    if judgemente !=None:
+      input_layer = tf.concat([input_layer, self.judgemente],1)
     if network_output_type == 'normal':
       self.outputs, self.var['w_out'], self.var['b_out'] = \
           linear(input_layer, output_size, weights_initializer,
@@ -54,9 +56,14 @@ class Network(object):
 
       # Average Dueling
       self.outputs = self.value + (self.advantage - 
-          tf.reduce_mean(self.advantage, reduction_indices=1, keepdims=True))
+          tf.reduce_mean(self.advantage))
+    elif network_output_type == 'judgement':
+      input_layer = tf.concat([input_layer,inputa],1)
+      self.outputs, self.var['w_out'], self.var['b_out'] = \
+          linear(input_layer,output_size,weights_initializer,
+                 biases_initializer,output_activation_fn, trainable, name='out')
 
-    self.max_outputs = tf.reduce_max(self.outputs, reduction_indices=1)
+    self.max_outputs = tf.reduce_max(self.outputs)
     self.outputs_idx = tf.placeholder('int32', [None, None], 'outputs_idx')
     self.outputs_with_idx = tf.gather_nd(self.outputs, self.outputs_idx)
     self.actions = tf.argmax(self.outputs, axis=1)
@@ -80,8 +87,8 @@ class Network(object):
   def calc_actions(self, observation):
     return self.actions.eval({self.inputs: observation}, session=self.sess)
 
-  def calc_outputs(self, observation):
-    return self.outputs.eval({self.inputs: observation}, session=self.sess)
+  def calc_outputs(self, observation,judgement):
+    return self.outputs.eval({self.inputs: observation,self.judgemente:judgement}, session=self.sess)
 
   def calc_max_outputs(self, observation):
     return self.max_outputs.eval({self.inputs: observation}, session=self.sess)

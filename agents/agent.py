@@ -81,7 +81,7 @@ class Agent(object):
       observation, reward, terminal, info = self.env.step(action, is_training=True)
       # 3. observe
       q, loss, is_update = self.observe(observation, reward, action, terminal)
-
+#      print(q)
       logger.debug("a: %d, r: %d, t: %d, q: %.4f, l: %.2f" % \
           (action, reward, terminal, np.mean(q), loss))
 
@@ -103,7 +103,7 @@ class Agent(object):
 
     best_reward, best_idx, best_count = 0, 0, 0
     try:
-      itr = xrange(n_episode)
+      itr = range(n_episode)
     except NameError:
       itr = range(n_episode)
     for idx in itr:
@@ -144,7 +144,7 @@ class Agent(object):
 
   def predict(self, s_t, ep):
     if random.random() < ep:
-      action = random.randrange(self.env.action_size)
+      action=random.randrange(self.env.action_size)
     else:
       action = self.pred_network.calc_actions([s_t])[0]
     return action
@@ -166,7 +166,7 @@ class Agent(object):
     terminal = [0]
 
     terminal = np.array(terminal) + 0.
-    max_q_t_plus_1 = self.target_network.calc_max_outputs(s_t_plus_1)
+    max_q_t_plus_1 = self.target_network.calc_max_outputs(s_t_plus_1,1) #do not use
     target_q_t = (1. - terminal) * self.discount_r * max_q_t_plus_1 + reward
 
     _, q_t, a, loss = self.sess.run([

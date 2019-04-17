@@ -21,7 +21,7 @@ def get_model_dir(config, exceptions=None):
         "%s=%s" % (key, ",".join([str(i) for i in value])
                    if type(value) == list else value))
 
-  return os.path.join('checkpoints', *names) + '/'
+  return names
 
 def timeit(f):
   def timed(*args, **kwargs):

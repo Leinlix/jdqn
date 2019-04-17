@@ -91,3 +91,4 @@ class DeepQ(Agent):
     })
 
     return q_t, loss, True
+

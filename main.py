@@ -27,14 +27,14 @@ flags.DEFINE_integer('max_r', +1, 'The maximum value of clipped reward')
 flags.DEFINE_integer('min_r', -1, 'The minimum value of clipped reward')
 flags.DEFINE_string('observation_dims', '[80, 80]', 'The dimension of gym observation')
 flags.DEFINE_boolean('random_start', True, 'Whether to start with random state')
-flags.DEFINE_boolean('use_cumulated_reward', False, 'Whether to use cumulated reward or not')
+flags.DEFINE_boolean('use_cumulated_reward', True, 'Whether to use cumulated reward or not')
 
 # Training
 flags.DEFINE_boolean('is_train', True, 'Whether to do training or testing')
 flags.DEFINE_integer('max_delta', None, 'The maximum value of delta')
 flags.DEFINE_integer('min_delta', None, 'The minimum value of delta')
 flags.DEFINE_float('ep_start', 1., 'The value of epsilon at start in e-greedy')
-flags.DEFINE_float('ep_end', 0.01, 'The value of epsilnon at the end in e-greedy')
+flags.DEFINE_float('ep_end', 0.1, 'Thevalue of epsilnon at the end in e-greedy')
 flags.DEFINE_integer('batch_size', 32, 'The size of batch for minibatch training')
 flags.DEFINE_integer('max_grad_norm', None, 'The maximum norm of gradient while updating')
 flags.DEFINE_float('discount_r', 0.99, 'The discount factor for reward')
@@ -43,9 +43,9 @@ flags.DEFINE_float('discount_r', 0.99, 'The discount factor for reward')
 flags.DEFINE_integer('t_train_freq', 4, '')
 
 # Below numbers will be multiplied by scale
-flags.DEFINE_integer('scale', 10000, 'The scale for big numbers')
-flags.DEFINE_integer('memory_size', 100, 'The size of experience memory (*= scale)')
-flags.DEFINE_integer('t_target_q_update_freq', 1, 'The frequency of target network to be updated (*= scale)')
+flags.DEFINE_integer('scale', 1000, 'The scale for big numbers')
+flags.DEFINE_integer('memory_size', 1000, 'The size of experience memory (*= scale)')
+flags.DEFINE_integer('t_target_q_update_freq', 10, 'The frequency of target network to be updated (*= scale)')
 flags.DEFINE_integer('t_test', 1, 'The maximum number of t while training (*= scale)')
 flags.DEFINE_integer('t_ep_end', 100, 'The time when epsilon reach ep_end (*= scale)')
 flags.DEFINE_integer('t_train_max', 5000, 'The maximum number of t while training (*= scale)')
@@ -57,7 +57,7 @@ flags.DEFINE_float('learning_rate', 0.00025, 'The learning rate of training')
 flags.DEFINE_float('learning_rate_minimum', 0.00025, 'The minimum learning rate of training')
 flags.DEFINE_float('learning_rate_decay', 0.96, 'The decay of learning rate of training')
 flags.DEFINE_float('decay', 0.99, 'Decay of RMSProp optimizer')
-flags.DEFINE_float('momentum', 0.0, 'Momentum of RMSProp optimizer')
+flags.DEFINE_float('momentum', 0.95, 'Momentum of RMSProp optimizer')
 flags.DEFINE_float('gamma', 0.99, 'Discount factor of return')
 flags.DEFINE_float('beta', 0.01, 'Beta of RMSProp optimizer')
 
@@ -71,7 +71,7 @@ flags.DEFINE_boolean('allow_soft_placement', True, 'Whether to use part or all o
 
 # Internal
 # It is forbidden to set a flag that is not defined
-flags.DEFINE_string('data_format', 'NCHW', 'INTERNAL USED ONLY')
+flags.DEFINE_string('data_format', 'NHWC', 'INTERNAL USED ONLY')
 
 def calc_gpu_fraction(fraction_string):
   idx, num = fraction_string.split('/')
@@ -86,6 +86,9 @@ conf = flags.FLAGS
 if conf.agent_type == 'DQN':
   from agents.deep_q import DeepQ
   TrainAgent = DeepQ
+elif conf.agent_type == 'JDQN':
+  from agents.judge_q_learning import JDQN
+  TrainAgent = JDQN
 else:
   raise ValueError('Unknown agent_type: %s' % conf.agent_type)
 
@@ -110,9 +113,7 @@ def main(_):
   else:
     conf.data_format = 'NHWC'
 
-  model_dir = get_model_dir(conf,
-      ['use_gpu', 'max_random_start', 'n_worker', 'is_train', 'memory_size', 'gpu_fraction',
-       't_save', 't_train', 'display', 'log_level', 'random_seed', 'tag', 'scale'])
+  model_dir = "./"
 
   # start
   #gpu_options = tf.GPUOptions(
@@ -164,6 +165,7 @@ def main(_):
                                 hidden_activation_fn=tf.sigmoid,
                                 network_output_type=conf.network_output_type,
                                 name='target_network', trainable=False)
+
     else:
       raise ValueError('Unkown network_header_type: %s' % (conf.network_header_type))
 
